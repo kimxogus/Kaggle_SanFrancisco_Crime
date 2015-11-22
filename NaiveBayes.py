@@ -1,6 +1,6 @@
 from common import *
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import MultinomialNB
 
 
 def main():
@@ -13,14 +13,14 @@ def main():
     test_X = preprocess(test_X)
 
     print("Fitting model")
-    forest = RandomForestClassifier(n_estimators=20)
-    forest.fit(train_X, train_Y)
+    model = MultinomialNB(alpha=0.00001)
+    model.fit(train_X, train_Y)
 
     print("Predicting the result")
-    test_Y = forest.predict_proba(test_X)
-    test_Y = pd.DataFrame(test_Y, index=test_X.index, columns=forest.classes_)
-    print(test_Y)
-    write_result(test_Y)
+    test_Y = model.predict_proba(test_X)
+    test_Y = pd.DataFrame(test_Y, index=test_X.index, columns=model.classes_)
+    print(test_Y[:10])
+    write_result(test_Y, 'NaiveBayes')
 
 
 def preprocess(data):
@@ -33,6 +33,9 @@ def preprocess(data):
     data["Month"] = data["Dates"].map(lambda x: pd.to_datetime(x).month)
     print("\tSeparating Year")
     data["Year"] = data["Dates"].map(lambda x: pd.to_datetime(x).year)
+
+    print("\tMake Coordinates positive")
+    data["X"] = data["X"].map(lambda x: -x)
 
     return data.drop("Dates", axis=1)
 
