@@ -2,14 +2,26 @@ import zipfile
 import random
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 
 
 def main():
     train_X, train_Y = import_training_data('train.csv')
-    #test_X = import_testing_data('test.csv')
+    test_X = import_testing_data('test.csv')
 
     print("Preprocessing...")
-    print(preprocess(train_X[:5]))
+    train_X = preprocess(train_X)
+    test_X = preprocess(test_X)
+
+    print(train_X.columns.values, test_X.columns.values)
+    print("Fitting model")
+    forest = RandomForestClassifier(n_estimators=100)
+    forest.fit(train_X, train_Y)
+
+    print("Predicting the result")
+    test_Y = forest.predict_proba(test_X)
+    test_Y = pd.DataFrame(test_Y, index=test_X.index, columns=forest.classes_)
+    print(test_Y)
 
 
 def import_training_data(file_name):
@@ -18,7 +30,7 @@ def import_training_data(file_name):
 
     data = pd.read_csv(zip.open(file_name))
 
-    keeps = ["Id", "Dates", "Category", "DayOfWeek", "PdDistrict", "Address", "X", "Y"]
+    keeps = ["Id", "Dates", "Category", "DayOfWeek", "PdDistrict", "X", "Y"]
     drops = []
     for col in data.columns.values:
         if col not in keeps:
@@ -34,24 +46,26 @@ def import_testing_data(file_name):
     zip_file = zipfile.ZipFile("input/"+file_name+'.zip')
 
     data = pd.read_csv(zip_file.open(file_name))
-
-    return data
+    data = pd.DataFrame(data, index=data["Id"])
+    return data.drop(["Id", "Address"], axis=1)
 
 
 def preprocess(data):
-    district = discritize(data, "PdDistrict")
-    dayOfWeek = discritize(data, "DayOfWeek")
+    data["PdDistrict"] = discretize(data, "PdDistrict")
+    data["DayOfWeek"] = discretize(data, "DayOfWeek")
 
-    hours = data["Dates"].map(lambda x: pd.to_datetime(x).hour)
-    months = data["Dates"].map(lambda x: pd.to_datetime(x).month)
-    years = data["Dates"].map(lambda x: pd.to_datetime(x).year)
+    print("\tSeparating Hour")
+    data["Hour"] = data["Dates"].map(lambda x: pd.to_datetime(x).hour)
+    print("\tSeparating Month")
+    data["Month"] = data["Dates"].map(lambda x: pd.to_datetime(x).month)
+    print("\tSeparating Year")
+    data["Year"] = data["Dates"].map(lambda x: pd.to_datetime(x).year)
 
-    data.drop(["Dates", "PdDistrict", "DayOfWeek"], axis=1)
-
-    return pd.concat([data, hours, months, years, district, dayOfWeek], axis=1)
+    return data.drop("Dates", axis=1)
 
 
-def discritize(data, col):
+def discretize(data, col):
+    print("\tDiscretizing " + col)
     val_list = list(enumerate(np.unique(data[col])))
     val_dict = {name: i for i, name in val_list}
     return data[col].map(lambda x: val_dict[x]).astype(int)
