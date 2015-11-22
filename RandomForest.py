@@ -9,19 +9,20 @@ def main():
     train_X, train_Y = import_training_data('train.csv')
     test_X = import_testing_data('test.csv')
 
-    print("Preprocessing...")
+    print("Preprocessing Training Data...")
     train_X = preprocess(train_X)
+    print("Preprocessing Testng Data...")
     test_X = preprocess(test_X)
 
-    print(train_X.columns.values, test_X.columns.values)
     print("Fitting model")
-    forest = RandomForestClassifier(n_estimators=100)
+    forest = RandomForestClassifier(n_estimators=20)
     forest.fit(train_X, train_Y)
 
     print("Predicting the result")
     test_Y = forest.predict_proba(test_X)
     test_Y = pd.DataFrame(test_Y, index=test_X.index, columns=forest.classes_)
     print(test_Y)
+    write_result(test_Y)
 
 
 def import_training_data(file_name):
@@ -86,6 +87,10 @@ def cross_validation(data, no_folds=10):
         train = data.ix[rows[:begin] + rows[end:]]
         yield [test, train]
         begin = end
+
+
+def write_result(output):
+    output.to_csv("output/submit.csv", index_label="Id")
 
 
 if __name__ == "__main__":
