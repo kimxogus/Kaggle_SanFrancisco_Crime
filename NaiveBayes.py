@@ -1,5 +1,5 @@
+import random
 from common import *
-import pandas as pd
 from sklearn.naive_bayes import MultinomialNB
 
 
@@ -38,6 +38,24 @@ def preprocess(data):
     data["X"] = data["X"].map(lambda x: -x)
 
     return data.drop("Dates", axis=1)
+
+
+def cross_validation(no_folds, data_X, data_Y):
+    data = pd.concat([data_X, data_Y])
+    rows = list(data.index)
+    random.shuffle(rows)
+    n = len(data)
+    folded_len = int(n / no_folds)
+    begin = 0
+    for i in range(no_folds):
+        if i == folded_len - 1:
+            end = n
+        else:
+            end = begin + folded_len
+        test = data.ix[rows[begin:end]]
+        train = data.ix[rows[:begin] + rows[end:]]
+        yield [test, train]
+        begin = end
 
 
 if __name__ == "__main__":
