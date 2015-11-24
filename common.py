@@ -1,6 +1,10 @@
+import csv
+import random
 import zipfile
 import numpy as np
 import pandas as pd
+from io import StringIO
+
 
 def import_training_data(file_name):
     print("Importing " + file_name)
@@ -35,6 +39,32 @@ def discretize(data, col):
     return data[col].map(lambda x: val_dict[x]).astype(int)
 
 
+def cross_validation(no_folds, train_X, train_Y):
+    data = pd.concat([train_X, train_Y], axis=1)
+    rows = list(data.index)
+    random.shuffle(rows)
+    n = len(data)
+    folded_len = int(n / no_folds)
+    begin = 0
+    for i in range(no_folds):
+        if i == folded_len - 1:
+            end = n
+        else:
+            end = begin + folded_len
+        test = data.ix[rows[begin:end]]
+        train = data.ix[rows[:begin] + rows[end:]]
+        yield [test, train]
+        begin = end
+
+
 def write_result(output, method):
+    print("Write results of " + method)
     output.to_csv("output/" + method + "_submit.csv", index_label="Id")
+    with zipfile.ZipFile('output/' + method +'_submit.zip', 'w') as zip_file:
+        string_buffer = StringIO()
+        csvwriter = csv.DictWriter(string_buffer, delimiter=',', fieldnames=output.columns.values)
+        csvwriter.writeheader()
+        for i, row in output.iterrows():
+            csvwriter.writerow(row)
+        zip_file.writestr('submit.csv', string_buffer.getvalue())
 

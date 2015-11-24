@@ -1,4 +1,3 @@
-import random
 from common import *
 from sklearn.naive_bayes import MultinomialNB
 
@@ -14,48 +13,65 @@ def main():
 
     print("Fitting model")
     model = MultinomialNB(alpha=0.00001)
-    model.fit(train_X, train_Y)
+    columns = []
+    accuracies = []
+    results = []
+    i = 0
+    for fold in cross_validation(10, train_X, train_Y):
+        tr_Y = fold[1]["Category"]
+        tr_X = fold[1].drop("Category", axis=1)
+        ts_Y = fold[0]["Category"]
+        ts_X = fold[0].drop("Category", axis=1)
 
-    print("Predicting the result")
-    test_Y = model.predict_proba(test_X)
-    test_Y = pd.DataFrame(test_Y, index=test_X.index, columns=model.classes_)
-    print(test_Y[:10])
+        model.fit(tr_X, tr_Y)
+        output = model.predict(ts_X)
+        accuracy = float(sum(output == ts_Y))/len(ts_Y)*100
+        accuracies.append(accuracy)
+        results.append(pd.DataFrame(model.predict_proba(test_X), index=test_X.index, columns=model.classes_))
+        columns = model.classes_
+
+        i += 1
+        print("\t" + str(i) + "th fold\t" + str(accuracy) + "%")
+
+    print("Generating combined model")
+    test_Y = pd.DataFrame(index=test_X.index, columns=columns)
+    for col in columns:
+        print("Calculating " + col + "'s mean")
+        lst = []
+        for data in results:
+            lst.append(data[col])
+        data = pd.concat(lst, axis=1)
+        test_Y[col] = data.mean(axis=1)
+
+    print(test_Y)
     write_result(test_Y, 'NaiveBayes')
 
 
 def preprocess(data):
-    data["PdDistrict"] = discretize(data, "PdDistrict")
-    data["DayOfWeek"] = discretize(data, "DayOfWeek")
+    print("\tMaking dummy data of PdDistrict")
+    PdDistrict = pd.get_dummies(data["PdDistrict"])
+    print("\tMaking dummy data of DayOfWeek")
+    DayOfWeek = pd.get_dummies(data["DayOfWeek"])
 
-    print("\tSeparating Hour")
-    data["Hour"] = data["Dates"].map(lambda x: pd.to_datetime(x).hour)
-    print("\tSeparating Month")
-    data["Month"] = data["Dates"].map(lambda x: pd.to_datetime(x).month)
-    print("\tSeparating Year")
-    data["Year"] = data["Dates"].map(lambda x: pd.to_datetime(x).year)
+    print("\tExtracting Dates")
+    Dates = data["Dates"].map(lambda x: pd.to_datetime(x))
+    print("\t\tSeparating Hour")
+    Hour = pd.get_dummies(Dates.map(lambda x: x.hour))
+    print("\t\tSeparating Month")
+    Month = pd.get_dummies(Dates.map(lambda x: x.month))
+    print("\t\tSeparating Year")
+    Year = pd.get_dummies(Dates.map(lambda x: x.year))
 
     print("\tMake Coordinates positive")
-    data["X"] = data["X"].map(lambda x: -x)
+    data["X"] = data["X"].map(lambda x: abs(x))
 
-    return data.drop("Dates", axis=1)
+    print("\tDrop columns")
+    data = data.drop(["Dates", "PdDistrict", "DayOfWeek"], axis=1)
 
+    print("\tConcatenate Original and dummy data")
+    data = pd.concat([data, PdDistrict, DayOfWeek, Hour, Month, Year], axis=1)
 
-def cross_validation(no_folds, data_X, data_Y):
-    data = pd.concat([data_X, data_Y])
-    rows = list(data.index)
-    random.shuffle(rows)
-    n = len(data)
-    folded_len = int(n / no_folds)
-    begin = 0
-    for i in range(no_folds):
-        if i == folded_len - 1:
-            end = n
-        else:
-            end = begin + folded_len
-        test = data.ix[rows[begin:end]]
-        train = data.ix[rows[:begin] + rows[end:]]
-        yield [test, train]
-        begin = end
+    return data
 
 
 if __name__ == "__main__":
