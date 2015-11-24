@@ -12,7 +12,7 @@ def main():
     test_X = preprocess(test_X)
 
     print("Fitting model")
-    model = MultinomialNB(alpha=0.00001)
+    model = MultinomialNB(alpha=0.01)
     columns = []
     accuracies = []
     results = []
@@ -43,24 +43,24 @@ def main():
         data = pd.concat(lst, axis=1)
         test_Y[col] = data.mean(axis=1)
 
-    print(test_Y)
+    print(test_Y[:5])
     write_result(test_Y, 'NaiveBayes')
 
 
 def preprocess(data):
     print("\tMaking dummy data of PdDistrict")
-    PdDistrict = pd.get_dummies(data["PdDistrict"])
+    district = pd.get_dummies(data["PdDistrict"])
     print("\tMaking dummy data of DayOfWeek")
-    DayOfWeek = pd.get_dummies(data["DayOfWeek"])
+    day = pd.get_dummies(data["DayOfWeek"])
 
     print("\tExtracting Dates")
-    Dates = data["Dates"].map(lambda x: pd.to_datetime(x))
+    dates = data["Dates"].map(lambda x: pd.to_datetime(x))
     print("\t\tSeparating Hour")
-    Hour = pd.get_dummies(Dates.map(lambda x: x.hour))
+    hour = pd.get_dummies(dates.map(lambda x: x.hour))
     print("\t\tSeparating Month")
-    Month = pd.get_dummies(Dates.map(lambda x: x.month))
+    month = pd.get_dummies(dates.map(lambda x: x.month))
     print("\t\tSeparating Year")
-    Year = pd.get_dummies(Dates.map(lambda x: x.year))
+    year = pd.get_dummies(dates.map(lambda x: x.year))
 
     print("\tMake Coordinates positive")
     data["X"] = data["X"].map(lambda x: abs(x))
@@ -69,7 +69,7 @@ def preprocess(data):
     data = data.drop(["Dates", "PdDistrict", "DayOfWeek"], axis=1)
 
     print("\tConcatenate Original and dummy data")
-    data = pd.concat([data, PdDistrict, DayOfWeek, Hour, Month, Year], axis=1)
+    data = pd.concat([data, district, day, hour, month, year], axis=1)
 
     return data
 

@@ -1,9 +1,7 @@
-import csv
 import random
 import zipfile
 import numpy as np
 import pandas as pd
-from io import StringIO
 
 
 def import_training_data(file_name):
@@ -60,11 +58,4 @@ def cross_validation(no_folds, train_X, train_Y):
 def write_result(output, method):
     print("Write results of " + method)
     output.to_csv("output/" + method + "_submit.csv", index_label="Id")
-    with zipfile.ZipFile('output/' + method +'_submit.zip', 'w') as zip_file:
-        string_buffer = StringIO()
-        csvwriter = csv.DictWriter(string_buffer, delimiter=',', fieldnames=output.columns.values)
-        csvwriter.writeheader()
-        for i, row in output.iterrows():
-            csvwriter.writerow(row)
-        zip_file.writestr('submit.csv', string_buffer.getvalue())
 
