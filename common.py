@@ -58,4 +58,5 @@ def cross_validation(no_folds, train_X, train_Y):
 def write_result(output, method):
     print("Write results of " + method)
     output.to_csv("output/" + method + "_submit.csv", index_label="Id")
+    print("Done.")
 
