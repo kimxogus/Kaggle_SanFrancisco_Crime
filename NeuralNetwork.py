@@ -17,7 +17,7 @@ def main():
     print(test_X[:5])
     print("Fitting model")
     model = MLPClassifier(verbose=True, activation='logistic', batch_size=300,
-                          algorithm='adam', early_stopping=True, validation_fraction=0.0001)
+                          algorithm='adam', early_stopping=False)
 
     model.fit(train_X, train_Y)
     test_Y = pd.DataFrame(model.predict_proba(test_X), index=test_X.index, columns=model.classes_)
