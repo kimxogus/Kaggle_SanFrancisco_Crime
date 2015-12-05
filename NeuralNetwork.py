@@ -1,6 +1,5 @@
 from common import *
-from sklearn.pipeline import Pipeline
-from sklearn.neural_network import BernoulliRBM, MLPClassifier
+from sklearn.neural_network import MLPClassifier
 
 
 def main():
@@ -17,12 +16,12 @@ def main():
     print(test_X[:5])
 
     print("Fitting model")
-    rbm = BernoulliRBM(verbose=True, learning_rate=0.05, random_state=0, n_iter=10)
-    mlp = MLPClassifier(verbose=True, activation='logistic', shuffle=True,
+    model = MLPClassifier(verbose=True, activation='logistic', shuffle=True, tol=5*1e-4,
                         algorithm='adam', random_state=0)
 
-    model = Pipeline(steps=[('rbm', rbm), ('mlp', mlp)])
     model.fit(train_X, train_Y[train_X.index])
+
+    print(np.sum(model.predict(train_X) == train_Y[train_X.index])*10000/len(train_X.index)/100)
 
     test_Y = pd.DataFrame(model.predict_proba(test_X), index=test_X.index, columns=model.classes_)
 
