@@ -10,7 +10,7 @@ def import_training_data(file_name):
 
     data = pd.read_csv(zip.open(file_name))
 
-    keeps = ["Id", "Dates", "Category", "DayOfWeek", "PdDistrict", "X", "Y"]
+    keeps = ["Dates", "Category", "DayOfWeek", "PdDistrict", "X", "Y", "Address"]
     drops = []
     for col in data.columns.values:
         if col not in keeps:
@@ -27,7 +27,7 @@ def import_testing_data(file_name):
 
     data = pd.read_csv(zip_file.open(file_name))
     data = pd.DataFrame(data, index=data["Id"])
-    return data.drop(["Id", "Address"], axis=1)
+    return data.drop(["Id"], axis=1)
 
 
 def discretize(data, col):
