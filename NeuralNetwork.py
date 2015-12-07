@@ -16,7 +16,7 @@ def main():
     print(test_X[:5])
 
     print("Fitting model")
-    model = MLPClassifier(verbose=True, activation='tanh', shuffle=True,
+    model = MLPClassifier(verbose=True, activation='logistic', shuffle=True,
                         algorithm='adam', random_state=0)
 
     model.fit(train_X, train_Y[train_X.index])
@@ -26,7 +26,7 @@ def main():
     test_Y = pd.DataFrame(model.predict_proba(test_X), index=test_X.index, columns=model.classes_)
 
     print(test_Y[:5])
-    write_result(test_Y, 'RBM_MLP')
+    write_result(test_Y, 'MLP_logistic')
 
 
 def preprocess(data):
