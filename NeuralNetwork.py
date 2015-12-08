@@ -12,11 +12,9 @@ def main():
     test_X = preprocess(test_X)
     print("Generate grid")
     train_X, test_X = generate_grid(train_X, test_X, no_grid=100)
-    print(train_X[:5])
-    print(test_X[:5])
 
     print("Fitting model")
-    model = MLPClassifier(verbose=True, activation='logistic', shuffle=True,
+    model = MLPClassifier(verbose=True, hidden_layer_sizes=(100, 20,), activation='logistic', shuffle=True,
                         algorithm='adam', random_state=0)
 
     model.fit(train_X, train_Y[train_X.index])
