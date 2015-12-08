@@ -18,11 +18,11 @@ def main():
     columns = []
     results = []
     i = 0
-    for fold in cross_validation(10, train_X, train_Y):
-        tr_Y = fold[1]["Category"]
-        tr_X = fold[1].drop("Category", axis=1)
-        ts_Y = fold[0]["Category"]
-        ts_X = fold[0].drop("Category", axis=1)
+    for train, test in cross_validation(10, train_X, train_Y):
+        tr_Y = train["Category"]
+        tr_X = train.drop("Category", axis=1)
+        ts_Y = test["Category"]
+        ts_X = test.drop("Category", axis=1)
 
         model.fit(tr_X, tr_Y)
         output = model.predict(ts_X)
@@ -51,14 +51,16 @@ def preprocess(data):
     data["PdDistrict"] = discretize(data, "PdDistrict")
     data["DayOfWeek"] = discretize(data, "DayOfWeek")
 
+    print("\tExtracting Dates")
+    dates = data["Dates"].map(lambda x: pd.to_datetime(x))
     print("\tSeparating Hour")
-    data["Hour"] = data["Dates"].map(lambda x: pd.to_datetime(x).hour)
+    data["Hour"] = dates.map(lambda x: x.hour)
     print("\tSeparating Month")
-    data["Month"] = data["Dates"].map(lambda x: pd.to_datetime(x).month)
+    data["Month"] = dates.map(lambda x: x.month)
     print("\tSeparating Year")
-    data["Year"] = data["Dates"].map(lambda x: pd.to_datetime(x).year)
+    data["Year"] = dates.map(lambda x: x.year)
 
-    return data.drop("Dates", axis=1)
+    return data.drop(["Dates", "Address"], axis=1)
 
 
 def generate_grid(train, test, no_grid=100):
